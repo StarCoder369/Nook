@@ -90,3 +90,29 @@ body {
 .welcome p {
   color: #938a7c;
 }
+
+/* ------------------------------ */
+
+/* Cards */
+
+.card {
+  width: 240px;
+  min-height: 160px;
+  padding: 20px;
+  border-radius: 10px;
+  background: #fffdf8;
+  border: 1px solid #e7e0d5;
+  box-shadow: 0 3px 10px rgba(50, 40, 20, 0.05);
+}
+
+.card h3 {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.card p {
+  margin: 0;
+  color: #938a7c;
+  font-size: 14px;
+}
