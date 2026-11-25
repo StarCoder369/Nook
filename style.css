@@ -1,0 +1,69 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1ece3;
+  color: #403b33;
+}
+
+.topbar {
+  height: 76px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #faf8f3;
+  border-bottom: 1px solid #e4ddd1;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 25px;
+}
+
+.brand span {
+  color: #938a7c;
+  font-size: 13px;
+}
+
+.toolbar button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #82745e;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  background: #716450;
+}
+
+#workspace {
+  min-height: calc(100vh - 76px);
+  padding: 40px;
+}
+
+.welcome {
+  text-align: center;
+  margin-top: 100px;
+}
+
+.welcome h2 {
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.welcome p {
+  color: #938a7c;
+}
