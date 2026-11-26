@@ -74,12 +74,23 @@ body {
   min-width: 0;
   height: 100%;
   overflow: auto;
-  padding: 40px;
+  background: #f5f1e9;
+}
+
+#canvas {
+  position: relative;
+  width: 2400px;
+  height: 1600px;
 }
 
 .welcome {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
-  margin-top: 100px;
+  width: 100%;
+  pointer-events: none;
 }
 
 .welcome h2 {
@@ -92,10 +103,10 @@ body {
 }
 
 /* ------------------------------ */
-
 /* Cards */
 
 .card {
+  position: absolute;
   width: 240px;
   min-height: 160px;
   padding: 20px;
