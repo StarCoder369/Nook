@@ -15,9 +15,8 @@ body {
   overflow: hidden;
 }
 
-/* ------------------------------ */
-
 /* Sidebar */
+
 .sidebar {
   width: 240px;
   flex-shrink: 0;
@@ -53,10 +52,17 @@ body {
   color: white;
   font-size: 14px;
   cursor: pointer;
+  transition:
+    background 150ms ease,
+    transform 150ms ease;
 }
 
 .sidebar-tools button:hover {
   background: #6f624e;
+}
+
+.sidebar-tools button:active {
+  transform: scale(0.98);
 }
 
 .sidebar-footer {
@@ -64,8 +70,6 @@ body {
   color: #aaa092;
   font-size: 12px;
 }
-
-/* ------------------------------ */
 
 /* Workspace */
 
@@ -83,47 +87,113 @@ body {
   height: 1600px;
 }
 
+/* Welcome message */
+
 .welcome {
   position: absolute;
-  top: 60px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  transform: translate(-50%, -50%);
   width: 100%;
+  text-align: center;
   pointer-events: none;
 }
 
 .welcome h2 {
   font-size: 28px;
-  font-weight: 500;
+  font-weight: 750;
 }
 
 .welcome p {
   color: #938a7c;
 }
 
-/* ------------------------------ */
 /* Cards */
 
 .card {
   position: absolute;
-  width: 240px;
-  min-height: 160px;
-  padding: 20px;
-  border-radius: 10px;
+  width: 260px;
+  min-height: 170px;
+  border-radius: 11px;
   background: #fffdf8;
   border: 1px solid #e7e0d5;
-  box-shadow: 0 3px 10px rgba(50, 40, 20, 0.05);
+  box-shadow: 0 3px 12px rgba(50, 40, 20, 0.06);
+  overflow: hidden;
+  transition:
+    box-shadow 150ms ease,
+    transform 150ms ease;
 }
 
-.card h3 {
-  margin: 0 0 14px;
-  font-size: 17px;
-  font-weight: 600;
+.card:hover {
+  box-shadow: 0 6px 18px rgba(50, 40, 20, 0.1);
 }
 
-.card p {
+.card.is-dragging {
+  transform: scale(1.02);
+  box-shadow: 0 12px 30px rgba(50, 40, 20, 0.18);
+  transition: none;
+}
+
+/* Card header and drag handle */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0ebe2;
+  cursor: grab;
+  touch-action: none;
+}
+
+.card.is-dragging .card-header {
+  cursor: grabbing;
+}
+
+.drag-grip {
+  width: 16px;
+  height: 18px;
+  flex-shrink: 0;
+  background-image: radial-gradient(circle, #b2a58f 1.5px, transparent 1.6px);
+  background-size: 6px 6px;
+  cursor: grab;
+}
+
+.card-title {
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  color: #938a7c;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+/* Editable card content */
+
+.card-content {
+  min-height: 120px;
+  padding: 16px;
+  color: #6f675b;
   font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.card-content:empty::before {
+  content: attr(data-placeholder);
+  color: #b0a797;
+  pointer-events: none;
+}
+
+.card-title:focus,
+.card-content:focus {
+  outline: none;
+}
+
+.card:focus-within {
+  border-color: #c8b99e;
 }
