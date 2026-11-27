@@ -366,22 +366,18 @@ body {
 /* Custom Formatting */
 
 .markdown-callout-warning {
-  background-color: rgba(240, 142, 142, 0.3);
+  background-color: #fff0d6;
   border-radius: 5px;
-  padding-left: 5px;
-  padding-right: 5px;
-  padding-top: 3px;
-  padding-bottom: 3px;
-  outline: #d48723;
-  outline-style: dashed;
-  outline-width: 2px;
+  padding: 7.5px;
+  outline: #e5bc78;
+  outline-style: solid;
+  outline-width: 1.5px;
   margin-bottom: 15px;
 }
 
-.markdown-callout-title-warning {
-  /* background-color: rgba(240, 142, 142, 0.3); */
-  font-weight: bold;
-  color: #dd6829;
+.markdown-callout-title {
+  font-weight: 500;
+  color: #000000;
   border-radius: 5px;
   padding-left: 5px;
   padding-right: 5px;
@@ -390,47 +386,53 @@ body {
 }
 
 .markdown-callout-content-warning {
-  background-color: rgba(240, 142, 142, 0.3);
+  background-color: #f9dfad;
   border-radius: 5px;
   padding-left: 5px;
   padding-right: 5px;
   padding: 5px;
   line-height: 1.5;
+  color: #a66b20;
 }
 
 .markdown-callout-info {
-  background-color: rgba(130, 209, 110, 0.3);
+  background-color: #e0eff9;
   border-radius: 5px;
-  padding-left: 5px;
-  padding-right: 5px;
-  padding-top: 3px;
-  padding-bottom: 3px;
-  outline: #84b669;
-  outline-style: dashed;
-  outline-width: 2px;
+  padding: 7.5px;
+  outline: #a8cbe5;
+  outline-style: solid;
+  outline-width: 1.5px;
   margin-bottom: 15px;
 }
 
-.markdown-callout-title-info {
-  /* background-color: rgba(240, 142, 142, 0.3); */
-  font-weight: bold;
-  color: #29bfdd;
-  border-radius: 5px;
-  padding-left: 5px;
-  padding-right: 5px;
-  padding-top: 3px;
-  padding-bottom: 3px;
-}
-
 .markdown-callout-content-info {
-  background-color: rgba(240, 142, 142, 0.3);
+  background-color: #c9e1f2;
   border-radius: 5px;
   padding-left: 5px;
   padding-right: 5px;
   padding: 5px;
   line-height: 1.5;
-  font-family: "Inter", sans-serif;
-  font-weight: 600px;
+  color: #356b91;
+}
+
+.markdown-callout-success {
+  background-color: #e8f1d9;
+  border-radius: 5px;
+  padding: 7.5px;
+  outline: #b8ce98;
+  outline-style: solid;
+  outline-width: 1.5px;
+  margin-bottom: 15px;
+}
+
+.markdown-callout-content-success {
+  background-color: #d8e9c2;
+  border-radius: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding: 5px;
+  line-height: 1.5;
+  color: #4f7539;
 }
 
 /* Editor */

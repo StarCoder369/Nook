@@ -526,7 +526,7 @@ function createCalloutExtension(lines, index, context, type) {
   return {
     html: `
       <div class="markdown-callout markdown-callout-${type}">
-        <div class="markdown-callout-title-${type}">${labels[type]}</div>
+        <div class="markdown-callout-title">${labels[type]}</div>
         <div class="markdown-callout-content-${type}">${content}</div>
       </div>
     `,
