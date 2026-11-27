@@ -4,7 +4,7 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "Inter";
   background: #f5f1e9;
   color: #403b33;
 }
@@ -375,9 +375,10 @@ body {
   outline: #d48723;
   outline-style: dashed;
   outline-width: 2px;
+  margin-bottom: 15px;
 }
 
-.markdown-callout-title {
+.markdown-callout-title-warning {
   /* background-color: rgba(240, 142, 142, 0.3); */
   font-weight: bold;
   color: #dd6829;
@@ -388,13 +389,48 @@ body {
   padding-bottom: 3px;
 }
 
-.markdown-callout-content {
+.markdown-callout-content-warning {
   background-color: rgba(240, 142, 142, 0.3);
+  border-radius: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding: 5px;
+  line-height: 1.5;
+}
+
+.markdown-callout-info {
+  background-color: rgba(130, 209, 110, 0.3);
   border-radius: 5px;
   padding-left: 5px;
   padding-right: 5px;
   padding-top: 3px;
   padding-bottom: 3px;
+  outline: #84b669;
+  outline-style: dashed;
+  outline-width: 2px;
+  margin-bottom: 15px;
+}
+
+.markdown-callout-title-info {
+  /* background-color: rgba(240, 142, 142, 0.3); */
+  font-weight: bold;
+  color: #29bfdd;
+  border-radius: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.markdown-callout-content-info {
+  background-color: rgba(240, 142, 142, 0.3);
+  border-radius: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding: 5px;
+  line-height: 1.5;
+  font-family: "Inter", sans-serif;
+  font-weight: 600px;
 }
 
 /* Editor */
