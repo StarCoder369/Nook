@@ -3,11 +3,11 @@ const workspace = document.getElementById("workspace");
 const canvas = document.getElementById("canvas");
 
 let welcome = document.getElementById("welcome");
+let hoveredCard = null;
 
 let spawnIndex = 0;
 let highestZIndex = 0;
 
-// This is an array of some random spawn offsets so when the cards spawn, they don't go out of the screen or go on top of each other.
 const spawnOffsets = [
   { x: 0, y: 0 },
   { x: 85, y: -35 },
@@ -23,6 +23,10 @@ const spawnOffsets = [
   { x: 195, y: 130 },
 ];
 
+// --------------------------------------------------
+//    General helpers
+// --------------------------------------------------
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -31,6 +35,25 @@ function centerCanvasOnStart() {
   workspace.scrollLeft = (canvas.clientWidth - workspace.clientWidth) / 2;
   workspace.scrollTop = (canvas.clientHeight - workspace.clientHeight) / 2;
 }
+
+function bringCardToFront(card) {
+  card.style.zIndex = String(++highestZIndex);
+}
+
+function keepCardInsideCanvas(card) {
+  const maxX = Math.max(0, canvas.clientWidth - card.offsetWidth);
+  const maxY = Math.max(0, canvas.clientHeight - card.offsetHeight);
+
+  const x = clamp(parseFloat(card.style.left) || 0, 0, maxX);
+  const y = clamp(parseFloat(card.style.top) || 0, 0, maxY);
+
+  card.style.left = `${x}px`;
+  card.style.top = `${y}px`;
+}
+
+// --------------------------------------------------
+//    Card spawning
+// --------------------------------------------------
 
 function getSpawnPosition(card) {
   const cardWidth = card.offsetWidth;
@@ -48,38 +71,18 @@ function getSpawnPosition(card) {
   const desiredX = centerX - cardWidth / 2 + offset.x + jitterX;
   const desiredY = centerY - cardHeight / 2 + offset.y + jitterY;
 
-  const minX = Math.max(24, workspace.scrollLeft + 24);
-  const minY = Math.max(24, workspace.scrollTop + 24);
+  const maxX = Math.max(0, canvas.clientWidth - cardWidth);
+  const maxY = Math.max(0, canvas.clientHeight - cardHeight);
 
-  const maxX = Math.min(
-    canvas.clientWidth - cardWidth - 24,
-    workspace.scrollLeft + workspace.clientWidth - cardWidth - 24,
-  );
-  const maxY = Math.min(
-    canvas.clientHeight - cardHeight - 24,
-    workspace.scrollTop + workspace.clientHeight - cardHeight - 24,
-  );
-
-  // If maxX >= minX then it does the first thing, or else it does the second thing
-  const x =
-    maxX >= minX
-      ? clamp(desiredX, minX, maxX)
-      : clamp(
-          workspace.scrollLeft + 24,
-          24,
-          canvas.clientWidth - cardWidth - 24,
-        );
-  const y =
-    maxY >= minY
-      ? clamp(desiredY, minY, maxY)
-      : clamp(
-          workspace.scrollTop + 24,
-          24,
-          canvas.clientHeight - cardHeight - 24,
-        );
-
-  return { x, y };
+  return {
+    x: clamp(desiredX, 0, maxX),
+    y: clamp(desiredY, 0, maxY),
+  };
 }
+
+// --------------------------------------------------
+//    Card dragging
+// --------------------------------------------------
 
 function enableCardDragging(card, dragSurface) {
   let dragState = null;
@@ -92,6 +95,10 @@ function enableCardDragging(card, dragSurface) {
       return;
     }
 
+    if (card.classList.contains("is-dissolving")) {
+      return;
+    }
+
     dragState = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -100,7 +107,7 @@ function enableCardDragging(card, dragSurface) {
       startTop: parseFloat(card.style.top) || 0,
     };
 
-    card.style.zIndex = String(++highestZIndex);
+    bringCardToFront(card);
     card.classList.add("is-dragging");
 
     dragSurface.setPointerCapture(event.pointerId);
@@ -116,8 +123,14 @@ function enableCardDragging(card, dragSurface) {
     const deltaX = event.clientX - dragState.startX;
     const deltaY = event.clientY - dragState.startY;
 
-    card.style.left = `${dragState.startLeft + deltaX}px`;
-    card.style.top = `${dragState.startTop + deltaY}px`;
+    const maxX = Math.max(0, canvas.clientWidth - card.offsetWidth);
+    const maxY = Math.max(0, canvas.clientHeight - card.offsetHeight);
+
+    const newX = clamp(dragState.startLeft + deltaX, 0, maxX);
+    const newY = clamp(dragState.startTop + deltaY, 0, maxY);
+
+    card.style.left = `${newX}px`;
+    card.style.top = `${newY}px`;
   });
 
   function stopDragging(event) {
@@ -133,6 +146,392 @@ function enableCardDragging(card, dragSurface) {
   dragSurface.addEventListener("pointercancel", stopDragging);
 }
 
+// --------------------------------------------------
+//    Card dissolving
+// --------------------------------------------------
+
+function dissolveCard(card) {
+  if (card.classList.contains("is-dissolving")) {
+    return;
+  }
+
+  card.classList.add("is-dissolving");
+
+  if (hoveredCard === card) {
+    hoveredCard = null;
+  }
+
+  card.addEventListener("transitionend", (event) => {
+    if (event.target === card && event.propertyName === "transform") {
+      card.remove();
+    }
+  });
+
+  // Fallback in case the transition event doesn't fire.
+  setTimeout(() => {
+    if (card.isConnected) {
+      card.remove();
+    }
+  }, 300);
+}
+
+// --------------------------------------------------
+//    Markdown renderer
+// --------------------------------------------------
+
+const markdownBlockExtensions = [];
+const markdownInlineExtensions = [];
+
+function registerMarkdownExtension(extension) {
+  if (typeof extension.block === "function") {
+    markdownBlockExtensions.push(extension);
+  }
+
+  if (typeof extension.inline === "function") {
+    markdownInlineExtensions.push(extension);
+  }
+}
+
+function escapeHTML(text) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function createMarkdownContext() {
+  const protectedHTML = [];
+
+  return {
+    protect(html) {
+      const index = protectedHTML.push(html) - 1;
+      return `\u0000${index}\u0000`;
+    },
+
+    restore(text) {
+      return text.replace(/\u0000(\d+)\u0000/g, (match, index) => {
+        return protectedHTML[Number(index)] ?? match;
+      });
+    },
+  };
+}
+
+function renderInlineMarkdown(source) {
+  const context = createMarkdownContext();
+  let text = escapeHTML(source);
+
+  for (const extension of markdownInlineExtensions) {
+    text = extension.inline(text, context);
+  }
+
+  return context.restore(text);
+}
+
+function findMarkdownBlock(lines, index) {
+  for (const extension of markdownBlockExtensions) {
+    const result = extension.block(lines, index, {
+      renderInline: renderInlineMarkdown,
+      escapeHTML,
+    });
+
+    if (result) {
+      return result;
+    }
+  }
+
+  return null;
+}
+
+function renderMarkdown(source) {
+  const lines = source.replace(/\r\n?/g, "\n").split("\n");
+  const output = [];
+
+  let index = 0;
+
+  while (index < lines.length) {
+    if (lines[index].trim() === "") {
+      index++;
+      continue;
+    }
+
+    const block = findMarkdownBlock(lines, index);
+
+    if (block) {
+      output.push(block.html);
+      index += block.consumed;
+      continue;
+    }
+
+    const paragraphLines = [];
+
+    while (
+      index < lines.length &&
+      lines[index].trim() !== "" &&
+      !findMarkdownBlock(lines, index)
+    ) {
+      paragraphLines.push(lines[index]);
+      index++;
+    }
+
+    output.push(
+      `<p>${paragraphLines.map(renderInlineMarkdown).join("<br>")}</p>`,
+    );
+  }
+
+  return output.join("\n");
+}
+
+// --------------------------------------------------
+//    Built-in Markdown extensions
+// --------------------------------------------------
+
+// Inline code: `code`
+registerMarkdownExtension({
+  name: "inline-code",
+
+  inline(text, context) {
+    return text.replace(/`([^`]+)`/g, (match, code) => {
+      return context.protect(`<code>${code}</code>`);
+    });
+  },
+});
+
+// Links: [text](https://example.com)
+registerMarkdownExtension({
+  name: "links",
+
+  inline(text, context) {
+    return text.replace(
+      /\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)/gi,
+      (match, label, url) => {
+        return context.protect(
+          `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`,
+        );
+      },
+    );
+  },
+});
+
+// Bold: **text** or __text__
+registerMarkdownExtension({
+  name: "bold",
+
+  inline(text, context) {
+    return text.replace(/\*\*(.+?)\*\*|__(.+?)__/g, (match, a, b) => {
+      return context.protect(`<strong>${a ?? b}</strong>`);
+    });
+  },
+});
+
+// Italics: *text* or _text_
+registerMarkdownExtension({
+  name: "italics",
+
+  inline(text, context) {
+    return text.replace(
+      /(?<!\*)\*([^*]+)\*(?!\*)|(?<!_)_([^_]+)_(?!_)/g,
+      (match, a, b) => {
+        return context.protect(`<em>${a ?? b}</em>`);
+      },
+    );
+  },
+});
+
+// Strikethrough: ~~text~~
+registerMarkdownExtension({
+  name: "strikethrough",
+
+  inline(text, context) {
+    return text.replace(/~~(.+?)~~/g, (match, content) => {
+      return context.protect(`<del>${content}</del>`);
+    });
+  },
+});
+
+// Headings: # through ######
+registerMarkdownExtension({
+  name: "headings",
+
+  block(lines, index, context) {
+    const match = lines[index].match(/^(#{1,6})\s+(.+)$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const level = match[1].length;
+    const content = context.renderInline(match[2]);
+
+    return {
+      html: `<h${level}>${content}</h${level}>`,
+      consumed: 1,
+    };
+  },
+});
+
+// Horizontal rules: ---, ***, or ___
+registerMarkdownExtension({
+  name: "horizontal-rule",
+
+  block(lines, index) {
+    if (/^\s*(---+|\*\*\*+|___+)\s*$/.test(lines[index])) {
+      return {
+        html: "<hr>",
+        consumed: 1,
+      };
+    }
+
+    return null;
+  },
+});
+
+// Blockquotes: > quoted text
+registerMarkdownExtension({
+  name: "blockquote",
+
+  block(lines, index, context) {
+    if (!/^\s*>\s?/.test(lines[index])) {
+      return null;
+    }
+
+    const quoteLines = [];
+
+    while (index < lines.length && /^\s*>\s?/.test(lines[index])) {
+      quoteLines.push(lines[index].replace(/^\s*>\s?/, ""));
+      index++;
+    }
+
+    return {
+      html: `<blockquote>${quoteLines.map(context.renderInline).join("<br>")}</blockquote>`,
+      consumed: quoteLines.length,
+    };
+  },
+});
+
+// Lists: - item or 1. item
+registerMarkdownExtension({
+  name: "lists",
+
+  block(lines, index, context) {
+    const firstMatch = lines[index].match(/^\s*([-*+]|\d+\.)\s+(.+)$/);
+
+    if (!firstMatch) {
+      return null;
+    }
+
+    const ordered = /^\d+\.$/.test(firstMatch[1]);
+    const tag = ordered ? "ol" : "ul";
+    const items = [];
+
+    while (index < lines.length) {
+      const match = lines[index].match(/^\s*([-*+]|\d+\.)\s+(.+)$/);
+
+      if (!match || /^\d+\.$/.test(match[1]) !== ordered) {
+        break;
+      }
+
+      let itemText = match[2];
+      let checkbox = "";
+
+      const taskMatch = itemText.match(/^\[([ xX])\]\s*(.*)$/);
+
+      if (taskMatch) {
+        const checked = taskMatch[1].toLowerCase() === "x";
+        checkbox = `<input type="checkbox" disabled ${checked ? "checked" : ""}>`;
+        itemText = taskMatch[2];
+      }
+
+      items.push(`<li>${checkbox}${context.renderInline(itemText)}</li>`);
+      index++;
+    }
+
+    return {
+      html: `<${tag}>${items.join("")}</${tag}>`,
+      consumed: items.length,
+    };
+  },
+});
+
+// Fenced code blocks: ``` code ```
+registerMarkdownExtension({
+  name: "code-blocks",
+
+  block(lines, index) {
+    if (!/^```/.test(lines[index])) {
+      return null;
+    }
+
+    index++;
+
+    const codeLines = [];
+
+    while (index < lines.length && !/^```/.test(lines[index])) {
+      codeLines.push(lines[index]);
+      index++;
+    }
+
+    if (index < lines.length) {
+      index++;
+    }
+
+    return {
+      html: `<pre><code>${escapeHTML(codeLines.join("\n"))}</code></pre>`,
+      consumed: codeLines.length + 2,
+    };
+  },
+});
+
+// --------------------------------------------------
+//    Card editing
+// --------------------------------------------------
+
+function beginEditingCard(card, preview) {
+  if (
+    card.classList.contains("is-dissolving") ||
+    card.querySelector(".markdown-editor")
+  ) {
+    return;
+  }
+
+  const editor = document.createElement("textarea");
+  editor.classList.add("markdown-editor");
+  editor.value = card.dataset.markdown || "";
+  editor.placeholder = "Write something...";
+
+  preview.replaceWith(editor);
+
+  editor.focus();
+
+  editor.addEventListener("input", () => {
+    editor.style.height = "auto";
+    editor.style.height = `${Math.max(120, editor.scrollHeight)}px`;
+  });
+
+  editor.addEventListener("blur", () => {
+    if (!editor.isConnected) {
+      return;
+    }
+
+    card.dataset.markdown = editor.value;
+
+    const newPreview = document.createElement("div");
+    newPreview.classList.add("card-content");
+    newPreview.innerHTML = renderMarkdown(editor.value);
+
+    editor.replaceWith(newPreview);
+
+    newPreview.addEventListener("click", () => {
+      beginEditingCard(card, newPreview);
+    });
+  });
+}
+
+// --------------------------------------------------
+//    Card creation
+// --------------------------------------------------
+
 function createCard() {
   if (welcome) {
     welcome.remove();
@@ -141,6 +540,7 @@ function createCard() {
 
   const card = document.createElement("div");
   card.classList.add("card");
+  card.dataset.markdown = "";
 
   const header = document.createElement("div");
   header.classList.add("card-header");
@@ -157,17 +557,34 @@ function createCard() {
   title.setAttribute("aria-label", "Card title");
   title.spellcheck = false;
 
+  const deleteButton = document.createElement("button");
+  deleteButton.classList.add("card-delete");
+  deleteButton.textContent = "×";
+  deleteButton.setAttribute("aria-label", "Dissolve card");
+  deleteButton.title = "Dissolve card (X)";
+
+  deleteButton.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+  });
+
+  deleteButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    dissolveCard(card);
+  });
+
   const content = document.createElement("div");
   content.classList.add("card-content");
-  content.contentEditable = "true";
-  content.setAttribute("role", "textbox");
-  content.setAttribute("aria-label", "Card content");
   content.setAttribute("data-placeholder", "Write something...");
+
+  content.addEventListener("click", () => {
+    beginEditingCard(card, content);
+  });
 
   header.appendChild(dragGrip);
   header.appendChild(title);
 
   card.appendChild(header);
+  card.appendChild(deleteButton);
   card.appendChild(content);
 
   canvas.appendChild(card);
@@ -176,14 +593,53 @@ function createCard() {
 
   card.style.left = `${position.x}px`;
   card.style.top = `${position.y}px`;
-  card.style.zIndex = String(++highestZIndex);
+
+  bringCardToFront(card);
+  keepCardInsideCanvas(card);
 
   enableCardDragging(card, header);
 
+  card.addEventListener("pointerenter", () => {
+    hoveredCard = card;
+  });
+
+  card.addEventListener("pointerleave", () => {
+    if (hoveredCard === card) {
+      hoveredCard = null;
+    }
+  });
+
   card.addEventListener("pointerdown", () => {
-    card.style.zIndex = String(++highestZIndex);
+    bringCardToFront(card);
   });
 }
+
+// --------------------------------------------------
+//    Keyboard shortcuts
+// --------------------------------------------------
+
+document.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() !== "x" || !hoveredCard) {
+    return;
+  }
+
+  const activeElement = document.activeElement;
+
+  if (
+    activeElement &&
+    (activeElement.isContentEditable ||
+      activeElement.tagName === "TEXTAREA" ||
+      activeElement.tagName === "INPUT")
+  ) {
+    return;
+  }
+
+  dissolveCard(hoveredCard);
+});
+
+// --------------------------------------------------
+//    App events
+// --------------------------------------------------
 
 addCardButton.addEventListener("click", createCard);
 

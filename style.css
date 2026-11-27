@@ -85,6 +85,7 @@ body {
   position: relative;
   width: 2400px;
   height: 1600px;
+  overflow: hidden;
 }
 
 /* Welcome message */
@@ -101,7 +102,7 @@ body {
 
 .welcome h2 {
   font-size: 28px;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .welcome p {
@@ -121,7 +122,8 @@ body {
   overflow: hidden;
   transition:
     box-shadow 150ms ease,
-    transform 150ms ease;
+    transform 150ms ease,
+    opacity 200ms ease;
 }
 
 .card:hover {
@@ -134,14 +136,23 @@ body {
   transition: none;
 }
 
-/* Card header and drag handle */
+.card.is-dissolving {
+  opacity: 0;
+  transform: scale(0.72);
+  pointer-events: none;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+/* Card header */
 
 .card-header {
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 48px;
-  padding: 12px 16px;
+  padding: 12px 36px 12px 16px;
   border-bottom: 1px solid #f0ebe2;
   cursor: grab;
   touch-action: none;
@@ -157,8 +168,9 @@ body {
   flex-shrink: 0;
   background-image: radial-gradient(circle, #b2a58f 1.5px, transparent 1.6px);
   background-size: 6px 6px;
-  cursor: grab;
 }
+
+/* Card title */
 
 .card-title {
   flex: 1;
@@ -171,7 +183,49 @@ body {
   cursor: text;
 }
 
-/* Editable card content */
+.card-title:focus {
+  outline: none;
+}
+
+/* Delete button */
+
+.card-delete {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #a69a88;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.card:hover .card-delete,
+.card:focus-within .card-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.card-delete:hover {
+  background: #f1e6dc;
+  color: #8e5546;
+}
+
+/* Card content */
 
 .card-content {
   min-height: 120px;
@@ -180,7 +234,6 @@ body {
   font-size: 14px;
   line-height: 1.6;
   overflow-wrap: anywhere;
-  cursor: text;
 }
 
 .card-content:empty::before {
@@ -189,11 +242,150 @@ body {
   pointer-events: none;
 }
 
-.card-title:focus,
 .card-content:focus {
   outline: none;
 }
 
 .card:focus-within {
   border-color: #c8b99e;
+}
+
+/* Markdown */
+
+.card-content h1,
+.card-content h2,
+.card-content h3,
+.card-content h4,
+.card-content h5,
+.card-content h6 {
+  margin: 0.8em 0 0.4em;
+  color: #403b33;
+  line-height: 1.3;
+}
+
+.card-content h1:first-child,
+.card-content h2:first-child,
+.card-content h3:first-child {
+  margin-top: 0;
+}
+
+.card-content h1 {
+  font-size: 24px;
+}
+
+.card-content h2 {
+  font-size: 21px;
+}
+
+.card-content h3 {
+  font-size: 18px;
+}
+
+.card-content h4 {
+  font-size: 16px;
+}
+
+.card-content h5 {
+  font-size: 14px;
+}
+
+.card-content h6 {
+  font-size: 13px;
+  color: #938a7c;
+}
+
+.card-content p {
+  margin: 0 0 0.8em;
+}
+
+.card-content p:last-child {
+  margin-bottom: 0;
+}
+
+.card-content ul,
+.card-content ol {
+  margin: 0.5em 0;
+  padding-left: 24px;
+}
+
+.card-content li {
+  margin: 0.2em 0;
+}
+
+.card-content hr {
+  border: none;
+  border-top: 1px solid #e7e0d5;
+  margin: 1em 0;
+}
+
+.card-content blockquote {
+  margin: 0.8em 0;
+  padding-left: 12px;
+  border-left: 3px solid #d7cbb8;
+  color: #938a7c;
+}
+
+.card-content code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #f1ece3;
+  color: #665743;
+  font-family: monospace;
+  font-size: 0.92em;
+}
+
+.card-content pre {
+  margin: 0.8em 0;
+  padding: 12px;
+  border-radius: 7px;
+  background: #f1ece3;
+  overflow-x: auto;
+}
+
+.card-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.card-content a {
+  color: #8b7250;
+  text-decoration: underline;
+  text-decoration-color: #c9b99e;
+  text-underline-offset: 2px;
+}
+
+.card-content a:hover {
+  color: #6f624e;
+}
+
+.card-content input[type="checkbox"] {
+  margin-right: 6px;
+  accent-color: #82745e;
+}
+
+/* Editor */
+
+.markdown-editor {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  padding: 16px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #6f675b;
+  font: inherit;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.markdown-editor::placeholder {
+  color: #b0a797;
+}
+
+/* Canvas boundary feedback */
+
+.card.is-dragging {
+  user-select: none;
 }
