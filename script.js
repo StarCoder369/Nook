@@ -463,6 +463,7 @@ registerMarkdownExtension({
       return null;
     }
 
+    const startIndex = index;
     index++;
 
     const codeLines = [];
@@ -472,16 +473,97 @@ registerMarkdownExtension({
       index++;
     }
 
+    // Consume the closing fence when one exists.
     if (index < lines.length) {
       index++;
     }
 
     return {
       html: `<pre><code>${escapeHTML(codeLines.join("\n"))}</code></pre>`,
-      consumed: codeLines.length + 2,
+      consumed: index - startIndex,
     };
   },
 });
+
+// --------------------------------------------------
+//    Custom callout Markdown extensions
+// --------------------------------------------------
+
+function createCalloutExtension(lines, index, context, type) {
+  const openingLine = lines[index].trim();
+
+  if (openingLine !== `::: ${type}`) {
+    return null;
+  }
+
+  const contentLines = [];
+  let closingIndex = -1;
+
+  for (let i = index + 1; i < lines.length; i++) {
+    if (lines[i].trim() === ":::") {
+      closingIndex = i;
+      break;
+    }
+
+    contentLines.push(lines[i]);
+  }
+
+  // Leave an unclosed callout alone instead of consuming the rest of the card.
+  if (closingIndex === -1) {
+    return null;
+  }
+
+  const labels = {
+    warning: "Warning",
+    info: "Info",
+    success: "Success",
+  };
+
+  const content = contentLines
+    .map((line) => context.renderInline(line))
+    .join("<br>");
+
+  return {
+    html: `
+      <div class="markdown-callout markdown-callout-${type}">
+        <div class="markdown-callout-title">${labels[type]}</div>
+        <div class="markdown-callout-content">${content}</div>
+      </div>
+    `,
+    consumed: closingIndex - index + 1,
+  };
+}
+
+function warningExtension(lines, index, context) {
+  return createCalloutExtension(lines, index, context, "warning");
+}
+
+function infoExtension(lines, index, context) {
+  return createCalloutExtension(lines, index, context, "info");
+}
+
+function successExtension(lines, index, context) {
+  return createCalloutExtension(lines, index, context, "success");
+}
+
+function registerCustomMarkdownExtensions() {
+  registerMarkdownExtension({
+    name: "warning-callout",
+    block: warningExtension,
+  });
+
+  registerMarkdownExtension({
+    name: "info-callout",
+    block: infoExtension,
+  });
+
+  registerMarkdownExtension({
+    name: "success-callout",
+    block: successExtension,
+  });
+}
+
+registerCustomMarkdownExtensions();
 
 // --------------------------------------------------
 //    Card editing
