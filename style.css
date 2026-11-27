@@ -363,6 +363,17 @@ body {
   accent-color: #82745e;
 }
 
+/* Custom Formatting */
+
+.markdown-callout-warning {
+  background-color: rgba(240, 142, 142, 0.5);
+  border-radius: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
 /* Editor */
 
 .markdown-editor {
